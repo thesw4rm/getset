@@ -7,6 +7,26 @@ use syn::{
 use self::GenMode::{Get, GetClone, GetCopy, GetMut, Set, SetWith};
 use super::parse_attr;
 
+// Helper function to check if a meta contains a specific mode
+fn has_mode_in_meta(meta: &Meta, mode: GenMode) -> bool {
+    match meta {
+        Meta::Path(path) => path.is_ident(mode.name()),
+        Meta::List(meta_list) => {
+            // Parse the meta list and check if it contains the mode
+            if let Ok(nested_metas) = meta_list.parse_args_with(
+                syn::punctuated::Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated
+            ) {
+                nested_metas.iter().any(|nested| {
+                    nested.path().is_ident(mode.name())
+                })
+            } else {
+                false
+            }
+        }
+        Meta::NameValue(name_value) => name_value.path.is_ident(mode.name()),
+    }
+}
+
 pub struct GenParams {
     pub mode: GenMode,
     pub global_attr: Option<Meta>,
@@ -194,7 +214,16 @@ pub fn implement(field: &Field, params: &GenParams) -> TokenStream2 {
         .iter()
         .filter_map(|v| parse_attr(v, params.mode))
         .next_back()
-        .or_else(|| params.global_attr.clone());
+        .or_else(|| {
+            // Only inherit global attribute if it contains the current mode
+            params.global_attr.as_ref().and_then(|global_attr| {
+                if has_mode_in_meta(global_attr, params.mode) {
+                    Some(global_attr.clone())
+                } else {
+                    None
+                }
+            })
+        });
 
     let visibility = parse_visibility(attr.as_ref(), params.mode.name());
     match attr {

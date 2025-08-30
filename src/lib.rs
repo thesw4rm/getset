@@ -399,7 +399,10 @@ fn parse_attr(attr: &syn::Attribute, mode: GenMode) -> Option<syn::Meta> {
                 );
             }
         } else {
-            last
+            // If no mode-specific attribute was found, only return prefix attributes for global processing
+            last.or_else(|| {
+                collected.into_iter().find(|meta| meta.path().is_ident("prefix"))
+            })
         }
     } else if attr.path().is_ident(mode.name()) {
         // If skip is not used, return the last occurrence of matching
