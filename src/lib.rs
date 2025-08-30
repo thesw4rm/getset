@@ -182,7 +182,7 @@ mod submodule {
 let mut foo = submodule::Foo::default();
 foo.public();
 ```
-
+[DEPRECATED]
 For some purposes, it's useful to have the `get_` prefix on the getters for
 either legacy of compatibility reasons. It is done with `with_prefix`.
 
@@ -367,6 +367,7 @@ fn parse_attr(attr: &syn::Attribute, mode: GenMode) -> Option<syn::Meta> {
                     || meta.path().is_ident("get_mut")
                     || meta.path().is_ident("set")
                     || meta.path().is_ident("set_with")
+                    || meta.path().is_ident("prefix")
                     || meta.path().is_ident("skip"))
                 {
                     abort!(meta.path().span(), "unknown setter or getter")
