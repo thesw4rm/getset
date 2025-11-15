@@ -14,11 +14,11 @@ fn has_mode_in_meta(meta: &Meta, mode: GenMode) -> bool {
         Meta::List(meta_list) => {
             // Parse the meta list and check if it contains the mode
             if let Ok(nested_metas) = meta_list.parse_args_with(
-                syn::punctuated::Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated
+                syn::punctuated::Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated,
             ) {
-                nested_metas.iter().any(|nested| {
-                    nested.path().is_ident(mode.name())
-                })
+                nested_metas
+                    .iter()
+                    .any(|nested| nested.path().is_ident(mode.name()))
             } else {
                 false
             }
@@ -118,7 +118,6 @@ pub fn parse_visibility(attr: Option<&Meta>, meta_name: &str) -> Option<Visibili
 /// Some users want legacy/compatibility.
 /// (Getters are often prefixed with `get_`)
 fn get_prefix_attr(f: &Field, params: &GenParams) -> Option<String> {
-    let mut prefix = None;
     // helper function to check if meta has `with_prefix` attribute
     let get_prefix_from_meta = |meta: &Meta| -> Option<String> {
         if let Meta::NameValue(name_value) = meta {
@@ -135,7 +134,7 @@ fn get_prefix_attr(f: &Field, params: &GenParams) -> Option<String> {
         None
     };
 
-    prefix = f
+    let mut prefix = f
         .attrs
         .iter()
         .filter(|attr| attr.path().is_ident("getset"))
