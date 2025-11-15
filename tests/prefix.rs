@@ -32,3 +32,40 @@ fn test_custom_prefix() {
     assert_eq!(true, *val.field3());
 }
 
+// For testing the global prefix attribute
+#[derive(Getters, Default)]
+#[getset(prefix = "global_")]
+pub struct GlobalPrefixTest {
+    #[getset(get = "pub")]
+    field1: usize,
+
+    #[getset(skip)]
+    field2: String,
+
+    #[getset(get = "pub", prefix = "override_")]
+    field3: bool,
+}
+
+impl GlobalPrefixTest {
+    fn new() -> Self {
+        GlobalPrefixTest {
+            field1: 100,
+            field2: "world".to_string(),
+            field3: false,
+        }
+    }
+
+    // Compile time error if field2 was not properly skipped
+    fn field2(&self) -> &String {
+        &self.field2
+    }
+}
+
+#[test]
+fn test_global_prefix() {
+    let val = GlobalPrefixTest::new();
+    assert_eq!(100, *val.global_field1());
+    // field2 skipped - we can define our own method
+    assert_eq!("world", val.field2());
+    assert_eq!(false, *val.override_field3());
+}
